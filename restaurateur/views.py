@@ -44,11 +44,14 @@ def find_coordinates(address, coordinates):
 
 def find_common_restaurant(restaurants):
     """Получаем список со списками ресторанов,
-    возвращаем те, которые фигурируют во всех списках.
+    возвращаем те, которые фигурируют во всех списках
+    :param restaurants: список ресторанов для каждого продукта.
     """
     if not restaurants:
         return None
-    suitable_rests = list(reduce(lambda i, j: i & j, (set(x) for x in restaurants)))
+    suitable_rests = list(reduce(
+        lambda i, j: i & j, (set(restaurant) for restaurant in restaurants)
+    ))
     return suitable_rests
 
 
@@ -144,7 +147,6 @@ def view_orders(request):
         .annotate(product_name=F('product__name')) \
         .annotate(restaurant_address=F('restaurant__address'))
 
-    #address_in_db = Address.objects.values('address', 'latitude', 'longitude')
     address_in_db = {
         address.address: (address.longitude, address.latitude) for address in Address.objects.all()
     }

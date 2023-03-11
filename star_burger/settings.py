@@ -1,6 +1,5 @@
 import os
 
-import dj_database_url
 
 from environs import Env
 
@@ -144,5 +143,3 @@ STATICFILES_DIRS = [
 PHONENUMBER_DEFAULT_REGION = 'RU'
 PHONENUMBER_DB_FORMAT = 'NATIONAL'
 PHONENUMBER_DEFAULT_FORMAT = 'NATIONAL'
-
-
