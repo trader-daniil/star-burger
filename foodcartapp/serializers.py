@@ -34,7 +34,7 @@ class OrderSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        if not data['products']:
+        if self.context['request'].method == 'POST' and not data['products']:
             raise serializers.ValidationError('Укажите продукты')
         return data
 
@@ -42,7 +42,6 @@ class OrderSerializer(serializers.ModelSerializer):
         products_data = validated_data.pop('products')
         order = Order.objects.create(**validated_data)
         for product in products_data:
-            print(product)
             OrderProduct.objects.create(
                 order=order,
                 product=product['product'],

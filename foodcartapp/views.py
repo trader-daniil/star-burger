@@ -4,12 +4,8 @@ import json
 from django.shortcuts import render
 
 from .models import Product, Order, OrderProduct
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import CreateAPIView
-from rest_framework.mixins import CreateModelMixin
+from rest_framework.generics import CreateAPIView, UpdateAPIView, DestroyAPIView
 from .serializers import OrderSerializer
-from rest_framework.response import Response
-from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from django.db import transaction
 
 
@@ -100,6 +96,18 @@ def check_products(order_datail):
 
 
 class OrderCreateView(CreateAPIView):
-    """Созадет заказ."""
+    """Создает заказ."""
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+
+class OrderUpdateDeleteView(UpdateAPIView, DestroyAPIView):
+    """Получает и удаляет заказ."""
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    lookup_field='pk'
+    
+    def get_serializer_context(self):
+        context = super(OrderUpdateDeleteView, self).get_serializer_context()
+        context.update({'request': self.request})
+        return context
