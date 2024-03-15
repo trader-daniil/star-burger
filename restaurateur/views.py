@@ -6,53 +6,9 @@ from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
-from django.db.models import F, Sum, Prefetch
-
-from django.urls import reverse
-from functools import reduce
-from django.db.models import Prefetch
-from coordinates import fetch_coordinates
-from environs import Env
-import geopy.distance
-
-
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 from address.models import Address
-
-
-env = Env()
-env.read_env()
-YANDEX_GEOCODE_API_KEY = env('YANDEX_GEOCODE_API_KEY')
-GEOCODE_URL = 'https://geocode-maps.yandex.ru/1.x'
-
-
-def find_coordinates(address, coordinates):
-    """
-    Получаем широту и долготу адреса
-    Если нет совпадений в БД, то обращаемся к Geocode Api
-    :param address: адрес, который нужно найти
-    :param coordinates: словарь с адресом и координатами 
-    """
-    try:
-        return coordinates[address]
-    except KeyError:
-        return fetch_coordinates(
-            address=address,
-            yandex_token=YANDEX_GEOCODE_API_KEY,
-        )
-
-
-def find_common_restaurant(restaurants):
-    """Получаем список со списками ресторанов,
-    возвращаем те, которые фигурируют во всех списках
-    :param restaurants: список ресторанов для каждого продукта.
-    """
-    if not restaurants:
-        return None
-    suitable_rests = list(reduce(
-        lambda i, j: i & j, (set(restaurant) for restaurant in restaurants)
-    ))
-    return suitable_rests
+from coordinates import find_coordinates
 
 
 class Login(forms.Form):
@@ -102,7 +58,6 @@ class LoginView(View):
 class LogoutView(auth_views.LogoutView):
     next_page = reverse_lazy('restaurateur:login')
 
-
 def is_manager(user):
     return user.is_staff  # FIXME replace with specific permission
 
@@ -138,15 +93,13 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.filter(status__lt=4) \
+    orders = Order.objects.get_not_complete_orders() \
         .prefetch_related('products') \
-        .annotate(restaurant_name=F('cooking_restaurant__name')) \
+        .get_cooking_restaurant_name() \
         .order_by('status')
-    restaurants_products = RestaurantMenuItem.objects \
-        .annotate(restaurant_name=F('restaurant__name')) \
-        .annotate(product_name=F('product__name')) \
-        .annotate(restaurant_address=F('restaurant__address'))
 
+    restaurants_products = RestaurantMenuItem.objects\
+                                             .get_restaurants_with_products()
     address_in_db = {
         address.address: (address.longitude, address.latitude) for address in Address.objects.all()
     }
@@ -159,32 +112,14 @@ def view_orders(request):
             address=order.address,
             coordinates=address_in_db,
         )
-        suitable_restaurants = []
-        for product in order.products.all():
-            rests_for_product = []
-            for restaurant_product in restaurants_products:
-                if not restaurant_product.product_name == product.name:
-                    continue
-                restaurant_coordinates = find_coordinates(
-                    address=restaurant_product.restaurant_address,
-                    coordinates=address_in_db,
-                )
-                distance = geopy.distance.geodesic(
-                    order_coordinates,
-                    restaurant_coordinates,
-                ).km
-                rests_for_product.append(
-                    f'{restaurant_product.restaurant_name} - {round(distance, 2)} км',
-                )
-                distance = geopy.distance.geodesic(
-                    order_coordinates,
-                    restaurant_coordinates,
-                ).km
-            suitable_restaurants.append(rests_for_product)
-        order.suitable_restaurants = find_common_restaurant(
+        suitable_restaurants = order.find_suitable_restaurants(
+            restaurants_products=restaurants_products,
+            addresses=address_in_db,
+            order_coordinates=order_coordinates,
+        )
+        order.suitable_restaurants = order.find_common_restaurant(
             restaurants=suitable_restaurants,
         )
-
     return render(
         request,
         template_name='order_items.html',

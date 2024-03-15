@@ -88,11 +88,12 @@ def register_order(request):
         )
     return JsonResponse({})
 
-
+"""
 def check_products(order_datail):
-    """Проверка правильно переданных продуктов."""
+    Проверка правильно переданных продуктов
     if not order_datail.get('products', '') or not isinstance(order_datail.get('products', ''), list):
         raise ValueError()
+"""
 
 
 class OrderCreateView(CreateAPIView):

@@ -2,9 +2,9 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
 from django.db.models import Sum, F
-from django.dispatch import receiver
-from django.db.models.signals import pre_delete, pre_save
-from django.core.exceptions import ObjectDoesNotExist
+from functools import reduce
+from coordinates import find_coordinates
+import geopy.distance
 
 
 class Restaurant(models.Model):
@@ -99,6 +99,13 @@ class Product(models.Model):
         return self.name
 
 
+class RestaurantMenuItemQuerySet(models.QuerySet):
+    def get_restaurants_with_products(self):
+        return self.annotate(restaurant_name=F('restaurant__name')) \
+                   .annotate(product_name=F('product__name')) \
+                   .annotate(restaurant_address=F('restaurant__address'))
+
+
 class RestaurantMenuItem(models.Model):
     restaurant = models.ForeignKey(
         Restaurant,
@@ -117,6 +124,7 @@ class RestaurantMenuItem(models.Model):
         default=True,
         db_index=True,
     )
+    objects = RestaurantMenuItemQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'пункт меню ресторана'
@@ -133,14 +141,20 @@ class OrderQuerySet(models.QuerySet):
 
     def get_total_price(self):
         """Возвращает полную стоимость заказа."""
-        orders_with_total_price = self.prefetch_related('products') \
-                                      .prefetch_related('products_amount') \
-                                      .annotate(
-            price_of_order=Sum(
-                F('products_amount__product__price')*F('products_amount__amount'),
+        orders_with_total_price = self.prefetch_related('order_detail') \
+            .annotate(
+                final_price=Sum(F('order_detail__amount') * F('order_detail__product_price')),
             )
-        )
         return orders_with_total_price
+
+    def get_not_complete_orders(self):
+        """Возвращаем все заказы, у которых статус меньше 4."""
+        return self.filter(status__lt=4)
+    
+    def get_cooking_restaurant_name(self):
+        """Добавляем поле с названием готовящего ресторана."""
+        return self.annotate(restaurant_name=F('cooking_restaurant__name'))
+
 
 
 class Order(models.Model):
@@ -228,6 +242,52 @@ class Order(models.Model):
         verbose_name = 'заказ'
         verbose_name_plural = 'заказы'
 
+    @staticmethod
+    def find_common_restaurant(restaurants):
+        """Получаем список со списками ресторанов,
+        возвращаем те, которые фигурируют во всех списках
+        :param restaurants: список ресторанов для каждого продукта.
+        """
+        if not restaurants:
+            return None
+        suitable_rests = list(reduce(
+            lambda i, j: i & j, (set(restaurant) for restaurant in restaurants)
+        ))
+        return suitable_rests
+    
+    def find_suitable_restaurants(
+            self, restaurants_products,
+            addresses, order_coordinates):
+        """Для каждого продукта в заказе получаем список с ресторанами,
+        способными приготовить этот продукт
+        :param restaurants_products: Ресторан с продуктом, названием рестонана
+        :param addresses: Все адреса в БД в формате словаря
+        :param order_coordinates: Координаты адреса доставки.
+        """
+        suitable_restaurants = []
+        for product in self.products.all():
+            rests_for_product = []
+            for restaurant_product in restaurants_products:
+                if not restaurant_product.product_name == product.name:
+                    continue
+                restaurant_coordinates = find_coordinates(
+                    address=restaurant_product.restaurant_address,
+                    coordinates=addresses,
+                )
+                distance = geopy.distance.geodesic(
+                    order_coordinates,
+                    restaurant_coordinates,
+                ).km
+                rests_for_product.append(
+                    f'{restaurant_product.restaurant_name} - {round(distance, 2)} км',
+                )
+                distance = geopy.distance.geodesic(
+                    order_coordinates,
+                    restaurant_coordinates,
+                ).km
+            suitable_restaurants.append(rests_for_product)
+        return suitable_restaurants
+
 
 class OrderProduct(models.Model):
     """Модель продукта в заказе."""
@@ -247,48 +307,10 @@ class OrderProduct(models.Model):
         on_delete=models.CASCADE,
         related_name='order_detail',
     )
-
-
-@receiver(pre_save, sender=Order)
-def change_status_order(sender, instance, *args, **kwargs):
-    """При указании ресторана, готовящего заказ, меняется статус на Сборка."""
-    try:
-        order_product_before_update = Order.objects.get(id=instance.id)
-    except ObjectDoesNotExist:
-        pass
-    else:
-        if not order_product_before_update.cooking_restaurant:
-            instance.status = 2
-
-
-@receiver(pre_save, sender=OrderProduct)
-def correct_order_total_price(sender, instance, *args, **kwargs):
-    """При уменьшении числа продуктов в заказе(amount)
-    Уменьшается общая стоимость,
-    при увеличении amount увеличивается total_price.
-    """
-    try:
-        order_product_before_update = OrderProduct.objects.get(id=instance.id)
-        order = order_product_before_update.order
-    except ObjectDoesNotExist:
-        order = instance.order
-        order.total_price += instance.product.price * instance.amount
-        order.save(update_fields=['total_price'])
-    else:
-        if order_product_before_update.amount > instance.amount:
-            inequality = order_product_before_update.amount - instance.amount
-            order.total_price -= inequality * instance.product.price
-            order.save(update_fields=['total_price'])
-        elif order_product_before_update.amount < instance.amount:
-            inequality = instance.amount - order_product_before_update.amount
-            order.total_price += inequality * instance.product.price
-            order.save(update_fields=['total_price'])
-
-
-@receiver(pre_delete, sender=OrderProduct)
-def correct_total_price(sender, instance, *args, **kwargs):
-    """После удаления продуктов из заказа,
-    конечная стоимость пересчитывается."""
-    order = instance.order
-    order.total_price -= instance.amount * instance.product.price
-    order.save(update_fields=['total_price'])
+    product_price = models.DecimalField(
+        verbose_name='цена продукта',
+        help_text='цена одного продукта на момент оформления заказа',
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )

@@ -3,13 +3,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.dispatch import receiver
 from django.db.models.signals import pre_save
 from coordinates import fetch_coordinates
-from environs import Env
-
-
-env = Env()
-env.read_env()
-
-YANDEX_GEOCODE_API_KEY = env('YANDEX_GEOCODE_API_KEY')
+from django.conf import settings
 
 
 class Address(models.Model):
@@ -51,5 +45,5 @@ def check_latitude_and_longitude(sender, instance, *args, **kwargs):
     if not (instance.latitude or instance.longitude):
         instance.longitude, instance.latitude = fetch_coordinates(
             instance.address,
-            YANDEX_GEOCODE_API_KEY,
+            settings.YANDEX_GEOCODE_API_KEY,
         )

@@ -1,12 +1,5 @@
 import requests
-from environs import Env
-
-
-env = Env()
-env.read_env()
-
-YANDEX_GEOCODE_API_KEY = env('YANDEX_GEOCODE_API_KEY')
-GEOCODE_URL = 'https://geocode-maps.yandex.ru/1.x'
+from django.conf import settings
 
 
 def fetch_coordinates(address, yandex_token):
@@ -21,7 +14,7 @@ def fetch_coordinates(address, yandex_token):
         'format': 'json',
     }
     response = requests.get(
-        url=GEOCODE_URL,
+        url=settings.GEOCODE_URL,
         params=params,
     )
     response.raise_for_status()
@@ -31,3 +24,19 @@ def fetch_coordinates(address, yandex_token):
     if not geoobject:
         return None
     return geoobject[0]['GeoObject']['Point']['pos'].split()
+
+def find_coordinates(address, coordinates):
+    """
+    Получаем широту и долготу адреса
+    Если нет совпадений в БД, то обращаемся к Geocode Api
+    :param address: адрес, который нужно найти
+    :param coordinates: словарь с адресом и координатами 
+    """
+    try:
+
+        return coordinates[address]
+    except KeyError:
+        return fetch_coordinates(
+            address=address,
+            yandex_token=settings.YANDEX_GEOCODE_API_KEY,
+        )

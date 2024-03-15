@@ -9,6 +9,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import (Product, ProductCategory,
     Restaurant, RestaurantMenuItem, Order)
+from django.db.models import Sum, F
 
 
 class RestaurantMenuItemInline(admin.TabularInline):
@@ -136,6 +137,23 @@ class OrderAdmin(admin.ModelAdmin):
             url=next_url,
             allowed_hosts='http://127.0.0.1:8000/',
         ):
-            return HttpResponseRedirect(request.GET['next'])
+            return HttpResponseRedirect(next_url)
         else:
             return response
+
+    def save_formset(self, request, form, formset, change):
+        """Меняем финальную стоимость заказа при изменении состава заказа."""
+        instances = formset.save(commit=False)
+        for instance in instances:
+            instance.save()
+        for obj in formset.deleted_objects:
+            obj.delete()
+        formset.save_m2m()
+        order = instances[0].order
+        order_price = Order.objects.prefetch_related('order_detail')\
+                                   .filter(id=order.id)\
+                                   .aggregate(
+            final_price=Sum(F('order_detail__amount') * F('order_detail__product_price')),
+        )
+        order.total_price = order_price['final_price']
+        order.save(update_fields=['total_price'])

@@ -12,7 +12,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 SECRET_KEY = env('SECRET_KEY')
-DEBUG = env.bool('DEBUG', True)
+DEBUG = env.bool('DEBUG', False)
+YANDEX_GEOCODE_API_KEY = env('YANDEX_GEOCODE_API_KEY')
+GEOCODE_URL = 'https://geocode-maps.yandex.ru/1.x'
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
 
@@ -41,7 +43,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'core.middleware.FirstMiddleware',
 ]
 
 ROOT_URLCONF = 'star_burger.urls'
