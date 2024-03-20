@@ -2,6 +2,7 @@ from .models import Order, Product, OrderProduct
 from rest_framework import serializers
 from rest_framework.response import Response
 from django.db import transaction
+from phonenumber_field.serializerfields import PhoneNumberField
 
 class OrderProductSerializer(serializers.ModelSerializer):
     """Сериализатор продукта для OrderProduct"""
@@ -19,8 +20,9 @@ class OrderSerializer(serializers.ModelSerializer):
     products = OrderProductSerializer(
         many=True,
         write_only=True,
+        required=True,
     )
-    phonenumber = serializers.CharField(source='contact_phone')
+    phonenumber = PhoneNumberField(source='contact_phone')
 
     class Meta:
         model = Order
@@ -32,11 +34,6 @@ class OrderSerializer(serializers.ModelSerializer):
             'address',
             'products',
         )
-
-    def validate(self, data):
-        if self.context['request'].method == 'POST' and not data['products']:
-            raise serializers.ValidationError('Укажите продукты')
-        return data
 
     @transaction.atomic
     def create(self, validated_data):
