@@ -9,4 +9,11 @@ npm install
 /opt/star_burger/venv/bin/python3 manage.py collectstatic
 sudo systemctl restart nginx
 sudo systemctl restart star-burger
+gitrev=$(git rev-parse HEAD)
+$(curl --request POST --url https://api.rollbar.com/api/1/deploy --header 'accept: application/json' --header 'content-type: application/json' --header 'X-Rollbar-Access-Token: 9872d0a4a6834035a54726d971dd9021 --data '
+{
+  "environment": "string",
+  "revision": $gitrev
+}
+')
 echo "You successfully deployed project"
