@@ -1,7 +1,6 @@
 set -e
 git pull
-sudo systemctl status nginx
-sudo systemctl status star-burger
+export $(grep -v '^#' .env | xargs)
 /opt/star_burger/venv/bin/pip3 install -r requirements.txt
 npm install
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
@@ -14,7 +13,7 @@ curl --request POST \
      --url https://api.rollbar.com/api/1/deploy \
      --header 'accept: application/json' \
      --header 'content-type: application/json' \
-     --header 'X-Rollbar-Access-Token: ' \
+     --header 'X-Rollbar-Access-Token: "$ROLLBAR_TOKEN"' \
      --data '
 {
   "environment": "production",
