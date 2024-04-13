@@ -13,7 +13,7 @@ curl --request POST \
      --url https://api.rollbar.com/api/1/deploy \
      --header 'accept: application/json' \
      --header 'content-type: application/json' \
-     --header 'X-Rollbar-Access-Token: "$ROLLBAR_TOKEN"' \
+     --header 'X-Rollbar-Access-Token: '$ROLLBAR_TOKEN'' \
      --data '
 {
   "environment": "production",
