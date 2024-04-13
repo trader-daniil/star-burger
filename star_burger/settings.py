@@ -102,19 +102,6 @@ DATABASES = {
 }
 
 
-"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('NAME'),
-        'USER': env('USER'),
-        'PASSWORD': env('PASSWORD'),
-        'HOST': env('HOST'),
-        'PORT': env('PORT'),
-        'ATOMIC_REQUESTS': True,
-    }
-}
-"""
 
 AUTH_PASSWORD_VALIDATORS = [
     {
