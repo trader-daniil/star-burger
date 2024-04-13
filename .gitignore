@@ -108,6 +108,10 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+staticfiles
+package-lock.json
+
+
 # Environments
 .env
 .venv
