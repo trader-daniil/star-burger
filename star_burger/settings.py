@@ -46,7 +46,7 @@ MIDDLEWARE = [
     'rollbar.contrib.django.middleware.RollbarNotifierMiddlewareExcluding404',
 ]
 
-APP_VERSION = env('APP_VERSION')
+APP_VERSION = env('APP_VERSION', 'developer')
 ROLLBAR = {
     'access_token': env('ROLLBAR_TOKEN'),
     'environment': APP_VERSION,
@@ -99,7 +99,6 @@ DATABASES = {
         default=env('DB_URL')
     )
 }
-
 
 
 AUTH_PASSWORD_VALIDATORS = [
