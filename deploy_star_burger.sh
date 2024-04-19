@@ -6,7 +6,7 @@ npm install
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 /opt/star_burger/venv/bin/python3 manage.py migrate --no-input
 /opt/star_burger/venv/bin/python3 manage.py collectstatic --no-input
-sudo systemctl restart nginx
+sudo systemctl reload nginx
 sudo systemctl restart star-burger
 gitrev=$(git rev-parse HEAD)
 curl --request POST \
