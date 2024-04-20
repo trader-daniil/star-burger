@@ -1,6 +1,7 @@
 set -e
 git pull
 export $(grep -v '^#' .env | xargs)
+deploy_commit=$(git log -1 --pretty=format:%H)
 /opt/star_burger/venv/bin/pip3 install -r requirements.txt
 npm install
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
@@ -17,7 +18,7 @@ curl --request POST \
      --data '
 {
   "environment": "production",
-  "revision": "'$git log -1 --pretty=format:"%H"'"
+  "revision": "'$deploy_commit'"
 }
 '
 echo 'You succesfullt deployed project'
