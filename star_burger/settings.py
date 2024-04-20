@@ -48,7 +48,7 @@ MIDDLEWARE = [
 
 APP_VERSION = env('APP_VERSION', 'developer')
 ROLLBAR = {
-    'access_token': env('ROLLBAR_TOKEN'),
+    'access_token': env('ROLLBAR_TOKEN', ''),
     'environment': APP_VERSION,
     'code_version': '1.0',
     'root': BASE_DIR,
