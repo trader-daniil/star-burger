@@ -17,7 +17,7 @@ curl --request POST \
      --data '
 {
   "environment": "production",
-  "revision": "'$gitrev'"
+  "revision": "'$git log -1 --pretty=format:"%H"'"
 }
 '
 echo 'You succesfullt deployed project'
