@@ -1,0 +1,6 @@
+FROM node:17
+WORKDIR /frontend
+COPY . .
+RUN npm install
+RUN ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+

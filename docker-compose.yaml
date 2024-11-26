@@ -24,11 +24,5 @@ services:
     depends_on:
       - frontend
 
-  frontend:
-    build: ./frontend
-    command: touch newfile.txt
-    volumes:
-      - ./frontend:/frontend
-
 volumes:
   postgres_data:
