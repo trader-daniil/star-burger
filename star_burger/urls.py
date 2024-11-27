@@ -18,6 +18,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import render
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 from . import settings
 
@@ -27,10 +28,10 @@ urlpatterns = [
     path('api/', include('foodcartapp.urls', namespace='foodcartapp')),
     path('manager/', include('restaurateur.urls', namespace='restaurateur')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
+urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += staticfiles_urlpatterns()
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [
         path(r'__debug__/', include(debug_toolbar.urls)),
     ] + urlpatterns
-urlpatterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

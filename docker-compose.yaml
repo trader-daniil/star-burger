@@ -21,8 +21,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=bilipe41
       - POSTGRES_DB=star-burgerdb
-    depends_on:
-      - frontend
 
 volumes:
   postgres_data:
