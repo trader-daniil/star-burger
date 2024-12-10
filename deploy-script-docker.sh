@@ -1,0 +1,1 @@
+cp -R ./frontend /var/www/frontend

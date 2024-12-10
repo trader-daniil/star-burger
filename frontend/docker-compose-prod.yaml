@@ -2,7 +2,13 @@ version: '3.8'
 
 services:
   frontend:
-    build: .
-    command: touch newfile.txt
+    build:
+      dockerfile:  Dockerfile.ubuntu
+      context: ./
     volumes:
-      - /var/www/frontend:/frontend
+      - type: bind
+        source: /var/www/frontend
+        target: /frontend
+    command: >
+      bash -c "npm install
+      && ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url='./'"
