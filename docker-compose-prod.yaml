@@ -5,6 +5,7 @@ services:
     build: .
     command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000
     volumes:
+      - /var/www/frontend/bundles:/star_burger/frontend/bundles
       - /var/www/frontend/static:/star_burger/static
       - /var/www/frontend/media:/star_burger/media
     ports:
@@ -31,7 +32,8 @@ services:
       context: ./frontend
     command: >
       bash -c "npm install
-      && ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./""
+      && ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+      && touch new.txt"
     volumes:
       - /var/www/frontend:/frontend
 
