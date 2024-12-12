@@ -5,9 +5,9 @@ services:
     build: .
     command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000
     volumes:
-      - /var/www/frontend/bundles:/opt/star_burger/frontend/bundles
-      - /var/www/frontend/static:/opt/star_burger/static
-      - /var/www/frontend/media:/opt/star_burger/media
+      - /var/www/frontend/bundles:/opt/star-burger/frontend/bundles
+      - /var/www/frontend/static:/opt/star-burger/static
+      - /var/www/frontend/media:/opt/star-burger/media
     ports:
       - 8000:8000
     env_file:
