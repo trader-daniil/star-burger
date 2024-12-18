@@ -3,9 +3,6 @@ version: '3.8'
 services:
   web:
     build: .
-    command: >
-      bash -c "python manage.py collectstatic --noinput
-      && gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - /var/www/frontend/bundles:/opt/star-burger/frontend/bundles
       - /var/www/frontend/static:/opt/star-burger/static

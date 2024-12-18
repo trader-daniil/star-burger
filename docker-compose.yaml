@@ -3,7 +3,9 @@ version: '3.8'
 services:
   web:
     build: .
-    command: gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000
+    command: >
+      bash -c "python manage.py collectstatic --noinput
+      && gunicorn star_burger.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - ./:/opt/star-burger
     ports:
@@ -17,10 +19,20 @@ services:
     image: postgres:13.0-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=bilipe41
-      - POSTGRES_DB=star-burgerdb
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+  
+  frontend:
+    build:
+      dockerfile: Dockerfile.ubuntu
+      context: ./frontend
+    command: >
+      bash -c "npm install
+      && ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./""
+    volumes:
+      - ./:/frontend
 
 volumes:
   postgres_data:

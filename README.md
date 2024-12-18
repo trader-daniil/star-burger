@@ -167,6 +167,46 @@ Parcel будет следить за файлами в каталоге `bundle
 Псоле внесения изменений в репозиторий, обновите код на сервере. Для автоматизации процесса создан скрипт deploy_star_burger.sh, проверьте, что вы можеет его запустить, для этого в правах должен стоять x, для смены прав используйте инструкцию [chmod](https://losst.pro/komanda-chmod-linux), после этого запустите ваш скрипт командой `sh deploy_star_burger.sh`
 
 
+## Переменные окружения в Docker
+
+Для запуска проекта с помощью [docker-compose](https://docs.docker.com/compose/) в созданный ранее файл .env добавьте следующие переменные окружения:
+
+- `ALLOWED_HOSTS` укажите публичный ip вашего облачного сервиса и добавьте localhost
+- `POSTGRES_USER` имя пользователя БД
+- `POSTGRES_PASSWORD` пароль от БД
+- `POSTGRES_DB` название БД
+
+
+## Запусть через Docker локально
+
+Для запуска проекта локально используя docker compose введите команду:
+
+```sh
+docker compose -f docker-compose.yaml up
+```
+
+
+## Запуск prod версии с помощью Docker
+
+После того, как Вы создали необходимые перемнные окружения, скачайте nginx на ваш хост
+
+```sh
+apt update && apt intall nginx 
+```
+
+Затем разрешите трафик через [firewall](https://selectel.ru/blog/tutorials/how-to-configure-firewall-with-ufw-on-ubuntu-20/):
+
+```sh
+ufw allow 'Nginx HTTP' 
+```
+
+И запустите скрипт для развертывания вашего проекта через docker compose:
+
+```sh
+sh deploy-script-docker.sh
+```
+
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart). Пример работающего проекта можно посмотреть по адресу [https://star-burger-devman.site/](https://star-burger-devman.site/)
